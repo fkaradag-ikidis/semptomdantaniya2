@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Semptomdan Tanıya</title>
+<style>
+:root{
+  --bg:#060d1a;--surface:#0d1826;--surface2:#111f30;--surface3:#16283d;
+  --border:#1e3248;--border2:#243b56;--accent:#0ea5e9;--green:#22c55e;
+  --yellow:#f59e0b;--red:#ef4444;--purple:#a78bfa;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+
+/* LOGIN */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo-icon{width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#06b6d4);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px}
+.login-title{font-size:20px;font-weight:700}
+.login-sub{font-size:13px;color:var(--text3);margin-top:4px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;color:var(--text3);font-weight:500;margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:14px;transition:.2s}
+.form-input:focus{outline:none;border-color:var(--accent)}
+.btn-login{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),#06b6d4);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;margin-top:8px}
+.btn-login:hover{opacity:.9;transform:translateY(-1px)}
+.login-error{color:var(--red);font-size:12px;margin-top:8px;text-align:center;min-height:18px}
+.first-run-notice{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:12px;font-size:12px;color:var(--yellow);margin-bottom:20px;line-height:1.6}
+
+/* ADMIN LAYOUT */
+#adminApp{display:none}
+.admin-topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.admin-logo{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.admin-badge{background:var(--accent);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn-sm{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;border:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{opacity:.9}
+.btn-outline{background:transparent;color:var(--text3);border:1px solid var(--border)}
+.btn-outline:hover{color:var(--text);border-color:var(--border2)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.1)}
+
+.admin-body{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 56px)}
+
+/* SIDEBAR */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto}
+.sidebar-section{padding:4px 12px;margin-bottom:4px}
+.sidebar-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);padding:4px 6px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:.15s;margin:1px 0}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:rgba(14,165,233,.12);color:var(--accent)}
+.nav-item .nav-icon{font-size:14px;width:20px;text-align:center}
+.nav-item .nav-count{margin-left:auto;font-size:10px;background:var(--surface2);padding:1px 6px;border-radius:10px;color:var(--text3)}
+.nav-item.active .nav-count{background:rgba(14,165,233,.2);color:var(--accent)}
+
+/* MAIN CONTENT */
+.admin-main{padding:24px;overflow-y:auto;max-height:calc(100vh - 56px)}
+.page{display:none}
+.page.active{display:block}
+
+/* DASHBOARD */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:28px;font-weight:700;margin:6px 0 2px;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--text3)}
+.stat-card.accent .stat-value{color:var(--accent)}
+.stat-card.green .stat-value{color:var(--green)}
+.stat-card.yellow .stat-value{color:var(--yellow)}
+.stat-card.purple .stat-value{color:var(--purple)}
+
+/* TABLE */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.table-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.table-title{font-size:14px;font-weight:600}
+.table-search{flex:1;max-width:280px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:13px}
+.table-search:focus{outline:none;border-color:var(--accent)}
+.branch-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px}
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);border-bottom:1px solid var(--border);background:var(--surface2);font-weight:600}
+tbody tr{border-bottom:1px solid var(--border);transition:.15s}
+tbody tr:hover{background:var(--surface2)}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:10px 14px;font-size:13px;vertical-align:middle}
+.td-name{font-weight:500;color:var(--text)}
+.td-cat{color:var(--text3);font-size:12px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.badge-high{background:rgba(34,197,94,.15);color:var(--green)}
+.badge-medium{background:rgba(245,158,11,.15);color:var(--yellow)}
+.badge-low{background:rgba(148,163,184,.15);color:var(--text3)}
+.badge-rare{background:rgba(167,139,250,.15);color:var(--purple)}
+.badge-male{background:rgba(14,165,233,.15);color:var(--accent)}
+.badge-female{background:rgba(236,72,153,.15);color:#f472b6}
+.badge-both{background:rgba(148,163,184,.1);color:var(--text3)}
+.btn-edit{padding:4px 10px;background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:6px;font-size:11px;cursor:pointer;transition:.15s}
+.btn-edit:hover{border-color:var(--accent);color:var(--accent)}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border)}
+.page-info{font-size:12px;color:var(--text3)}
+.page-btns{display:flex;gap:4px}
+.page-btn{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;transition:.15s}
+.page-btn:hover{border-color:var(--border2);color:var(--text)}
+.page-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:600}
+.modal-close{background:transparent;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1;transition:.15s}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:20px}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.edit-group{display:flex;flex-direction:column;gap:5px}
+.edit-group.full{grid-column:1/-1}
+.edit-label{font-size:12px;color:var(--text3);font-weight:500}
+.edit-input,.edit-select,.edit-textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:7px;font-size:13px;width:100%;transition:.2s}
+.edit-input:focus,.edit-select:focus,.edit-textarea:focus{outline:none;border-color:var(--accent)}
+.edit-textarea{resize:vertical;min-height:80px;font-family:inherit}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.btn-save{padding:8px 20px;background:var(--green);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-save:hover{opacity:.9}
+.btn-cancel{padding:8px 16px;background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:7px;font-size:13px;cursor:pointer}
+.btn-cancel:hover{color:var(--red);border-color:var(--red)}
+
+/* PROFİL */
+.profile-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:520px}
+.profile-title{font-size:15px;font-weight:600;margin-bottom:20px}
+.profile-form{display:grid;gap:14px}
+.profile-divider{border:none;border-top:1px solid var(--border);margin:8px 0}
+.pw-section-title{font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:.3s;z-index:999;transform:translateY(10px)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{border-color:var(--green);color:var(--green)}
+.toast.error{border-color:var(--red);color:var(--red)}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- GİRİŞ EKRANI -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">🛡️</div>
+      <div class="login-title">Admin Paneli</div>
+      <div class="login-sub">Semptomdan Tanıya · Veritabanı Yönetimi</div>
+    </div>
+    
+    <div class="first-run-notice" id="firstRunNotice" style="display:none">
+      ⚠️ <b>İlk kurulum:</b> Yeni şifre belirleyin. Bu şifre tarayıcınızda şifreli olarak saklanır. Hiçbir sunucuya gönderilmez.
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Kullanıcı Adı</label>
+      <input class="form-input" id="loginUser" type="text" placeholder="Kullanıcı adı" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Şifre</label>
+      <input class="form-input" id="loginPass" type="password" placeholder="Şifre" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Giriş Yap</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ADMIN UYGULAMASI -->
+<div id="adminApp">
+  
+  <div class="admin-topbar">
+    <div class="admin-logo">
+      🩺 Semptomdan Tanıya <span class="admin-badge">ADMIN</span>
+    </div>
+    <div class="topbar-actions">
+      <span id="adminUserName" style="font-size:12px;color:var(--text3)"></span>
+      <button class="btn-sm btn-outline" onclick="showPage('profile')">⚙️ Profil</button>
+      <button class="btn-sm btn-danger" onclick="doLogout()">Çıkış</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Genel</div>
+        <div class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+          <span class="nav-icon">📊</span> Dashboard
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Veritabanı</div>
+        <div class="nav-item" id="nav-diseases" onclick="showPage('diseases')">
+          <span class="nav-icon">🔬</span> Hastalıklar
+          <span class="nav-count" id="navCountDiseases">—</span>
+        </div>
+        <div class="nav-item" id="nav-branches" onclick="showPage('branches')">
+          <span class="nav-icon">🏥</span> Branşlar
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Ayarlar</div>
+        <div class="nav-item" id="nav-profile" onclick="showPage('profile')">
+          <span class="nav-icon">👤</span> Profil & Şifre
+        </div>
+      </div>
+    </div>
+
+    <!-- ANA İÇERİK -->
+    <div class="admin-main">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <h2 style="font-size:18px;margin-bottom:16px">Dashboard</h2>
+        <div class="stat-grid">
+          <div class="stat-card accent">
+            <div class="stat-label">Toplam Hastalık</div>
+            <div class="stat-value" id="statTotal">—</div>
+            <div class="stat-sub">Tüm branşlar</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Branş Sayısı</div>
+            <div class="stat-value" id="statBranches">—</div>
+            <div class="stat-sub">Aktif kategoriler</div>
+          </div>
+          <div class="stat-card yellow">
+            <div class="stat-label">Lab Zenginleştirilmiş</div>
+            <div class="stat-value" id="statLabPct">—</div>
+            <div class="stat-sub">% sayısal değer içeren</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-label">Demografik Kapsam</div>
+            <div class="stat-value" id="statDemoPct">—</div>
+            <div class="stat-sub">% demografik veri içeren</div>
+          </div>
+        </div>
+        
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">Branş Özeti</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Branş</th><th>Hastalık</th><th>Erkek-spesifik</th><th>Kadın-spesifik</th><th>Çocuk</th><th>Lab %</th>
+              </tr>
+            </thead>
+            <tbody id="branchSummaryBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- HASTALIKLAR -->
+      <div class="page" id="page-diseases">
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">Hastalık Listesi</div>
+            <input class="table-search" id="diseaseSearch" type="text" placeholder="Hastalık ara…" oninput="filterDiseases()">
+            <select class="branch-select" id="branchFilter" onchange="filterDiseases()">
+              <option value="">Tüm Branşlar</option>
+            </select>
+            <select class="branch-select" id="genderFilter" onchange="filterDiseases()">
+              <option value="">Tüm Cinsiyetler</option>
+              <option value="male">Erkek</option>
+              <option value="female">Kadın</option>
+              <option value="both">Her ikisi</option>
+            </select>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Hastalık Adı</th><th>Branş</th><th>Cinsiyet</th><th>Prevalans</th><th>Lab</th><th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="diseaseTableBody"></tbody>
+          </table>
+          <div class="pagination">
+            <div class="page-info" id="pageInfo"></div>
+            <div class="page-btns" id="pageBtns"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BRANŞLAR -->
+      <div class="page" id="page-branches">
+        <h2 style="font-size:18px;margin-bottom:16px">Branş Yönetimi</h2>
+        <div id="branchCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px"></div>
+      </div>
+
+      <!-- PROFİL -->
+      <div class="page" id="page-profile">
+        <h2 style="font-size:18px;margin-bottom:20px">Profil & Güvenlik</h2>
+        <div class="profile-card">
+          <div class="profile-title">Hesap Bilgileri</div>
+          <div class="profile-form">
+            <div class="edit-group">
+              <div class="edit-label">Kullanıcı Adı</div>
+              <input class="edit-input" id="profileUser" type="text" placeholder="Kullanıcı adı">
+            </div>
+            <div class="edit-group">
+              <div class="edit-label">Ad Soyad</div>
+              <input class="edit-input" id="profileName" type="text" placeholder="Ad soyad">
+            </div>
+            <div class="edit-group">
+              <div class="edit-label">Unvan / Branş</div>
+              <input class="edit-input" id="profileTitle" type="text" placeholder="Dr., Prof., vb.">
+            </div>
+            <hr class="profile-divider">
+            <div class="pw-section-title">Şifre Değiştir</div>
+            <div class="edit-group">
+              <div class="edit-label">Mevcut Şifre</div>
+              <input class="edit-input" id="profileCurrentPw" type="password" placeholder="Mevcut şifre">
+            </div>
+            <div class="edit-group">
+              <div class="edit-label">Yeni Şifre</div>
+              <input class="edit-input" id="profileNewPw" type="password" placeholder="Yeni şifre (min 8 karakter)">
+            </div>
+            <div class="edit-group">
+              <div class="edit-label">Yeni Şifre (Tekrar)</div>
+              <input class="edit-input" id="profileNewPw2" type="password" placeholder="Şifreyi tekrar girin">
+            </div>
+            <button class="btn-save" style="width:100%" onclick="saveProfile()">💾 Kaydet</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- DÜZENLEME MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="editModalTitle">Hastalık Düzenle</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editDiseaseIdx">
+      <div class="edit-grid">
+        <div class="edit-group">
+          <div class="edit-label">ICD Kodu</div>
+          <input class="edit-input" id="editId" type="text">
+        </div>
+        <div class="edit-group">
+          <div class="edit-label">Hastalık Adı (TR)</div>
+          <input class="edit-input" id="editName" type="text">
+        </div>
+        <div class="edit-group">
+          <div class="edit-label">İngilizce Ad</div>
+          <input class="edit-input" id="editEnName" type="text">
+        </div>
+        <div class="edit-group">
+          <div class="edit-label">Kategori</div>
+          <input class="edit-input" id="editCategory" type="text">
+        </div>
+        <div class="edit-group">
+          <div class="edit-label">Alt Kategori</div>
+          <input class="edit-input" id="editSubcat" type="text">
+        </div>
+        <div class="edit-group">
+          <div class="edit-label">Prevalans</div>
+          <select class="edit-select" id="editPrevalence">
+            <option value="high">Yaygın (High)</option>
+            <option value="medium">Orta (Medium)</option>
+            <option value="low">Nadir (Low)</option>
+            <option value="rare">Çok Nadir (Rare)</option>
+          </select>
+        </div>
+        <div class="edit-group">
+          <div class="edit-label">Cinsiyet</div>
+          <select class="edit-select" id="editGender">
+            <option value="both">Her İkisi</option>
+            <option value="male">Erkek</option>
+            <option value="female">Kadın</option>
+          </select>
+        </div>
+        <div class="edit-group">
+          <div class="edit-label">Min Yaş</div>
+          <input class="edit-input" id="editAgeMin" type="number" min="0" max="120">
+        </div>
+        <div class="edit-group">
+          <div class="edit-label">Max Yaş</div>
+          <input class="edit-input" id="editAgeMax" type="number" min="0" max="120">
+        </div>
+        <div class="edit-group full">
+          <div class="edit-label">Semptomlar (virgülle ayırın)</div>
+          <textarea class="edit-textarea" id="editSymptoms" rows="3"></textarea>
+        </div>
+        <div class="edit-group full">
+          <div class="edit-label">Lab Bulguları (her satır ayrı)</div>
+          <textarea class="edit-textarea" id="editLabs" rows="4"></textarea>
+        </div>
+        <div class="edit-group full">
+          <div class="edit-label">Tedavi (virgülle ayırın)</div>
+          <textarea class="edit-textarea" id="editTreatment" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">İptal</button>
+      <button class="btn-save" onclick="saveDiseaseEdit()">💾 Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="adminToast"></div>
+
+<script>
+// ==========================================
+// AUTH — Şifre hiçbir yerde açık saklanmaz
+// SHA-256 hash kullanılır, localStorage'da hash tutulur
+// ==========================================
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+const STORAGE_KEY = 'sta_admin_v3';
+const SESSION_KEY = 'sta_session';
+
+function getAdminConfig() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); }
+  catch { return null; }
+}
+
+function setAdminConfig(cfg) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+}
+
+async function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+
+  if (!user || !pass) { errEl.textContent = 'Kullanıcı adı ve şifre gerekli'; return; }
+
+  const cfg = getAdminConfig();
+  const hash = await sha256(user + ':' + pass);
+
+  if (!cfg) {
+    // İlk kurulum — şifre belirle
+    if (pass.length < 6) { errEl.textContent = 'Şifre en az 6 karakter olmalı'; return; }
+    setAdminConfig({ 
+      userHash: hash, 
+      username: user,
+      name: user,
+      title: '',
+      createdAt: Date.now()
+    });
+    sessionStorage.setItem(SESSION_KEY, hash);
+    showAdmin(user);
+    return;
+  }
+
+  if (hash !== cfg.userHash) {
+    errEl.textContent = 'Kullanıcı adı veya şifre hatalı';
+    document.getElementById('loginPass').value = '';
+    return;
+  }
+
+  sessionStorage.setItem(SESSION_KEY, hash);
+  showAdmin(cfg.name || cfg.username);
+}
+
+function doLogout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('adminApp').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPass').value = '';
+}
+
+function checkSession() {
+  const cfg = getAdminConfig();
+  if (!cfg) {
+    // İlk kurulum
+    document.getElementById('firstRunNotice').style.display = 'block';
+    document.getElementById('loginUser').placeholder = 'Yeni kullanıcı adı belirleyin';
+    return;
+  }
+  const sess = sessionStorage.getItem(SESSION_KEY);
+  if (sess && sess === cfg.userHash) {
+    showAdmin(cfg.name || cfg.username);
+  }
+}
+
+function showAdmin(name) {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminApp').style.display = 'block';
+  document.getElementById('adminUserName').textContent = name;
+  loadAdminData();
+  loadProfileForm();
+}
+
+// ==========================================
+// VERİTABANI
+// ==========================================
+let allDiseases = [];
+let filteredDiseases = [];
+let currentPage = 1;
+const PAGE_SIZE = 25;
+const BRANCHES = [
+  'enfeksiyon','onkoloji','hematoloji','endokrin','kardiyoloji','gogus',
+  'gastro','nefroloji','romatoloji','noroloji','psikiyatri','dermatoloji',
+  'kadin_dogum','cocuk','metabolik','goz','kbb','travma','uroloji','ortopedi'
+];
+const BRANCH_LABELS = {
+  enfeksiyon:'Enfeksiyon',onkoloji:'Onkoloji',hematoloji:'Hematoloji',
+  endokrin:'Endokrin',kardiyoloji:'Kardiyoloji',gogus:'Göğüs Hastalıkları',
+  gastro:'Gastroenteroloji',nefroloji:'Nefroloji',romatoloji:'Romatoloji',
+  noroloji:'Nöroloji',psikiyatri:'Psikiyatri',dermatoloji:'Dermatoloji',
+  kadin_dogum:'Kadın Doğum',cocuk:'Pediatri',metabolik:'Metabolik',
+  goz:'Oftalmoloji',kbb:'KBB',travma:'Travma',uroloji:'Üroloji',ortopedi:'Ortopedi'
+};
+
+async function loadAdminData() {
+  allDiseases = [];
+  
+  // DB dosyalarını fetch ile yükle (admin/ alt dizininden bir üst dizin)
+  const BASE = '../';
+  let loaded = 0;
+  
+  for (const branch of BRANCHES) {
+    try {
+      const r = await fetch(`${BASE}veritabani_${branch}.js?nocache=${Date.now()}`);
+      const text = await r.text();
+      const varname = `diseaseDB_${branch}`;
+      const fn = new Function(text + `;return typeof ${varname} !== 'undefined' ? ${varname} : null;`);
+      const db = fn();
+      if (db?.diseases) {
+        db.diseases.forEach(d => { d._branch = branch; });
+        allDiseases.push(...db.diseases);
+        loaded++;
+      }
+    } catch(e) { /* branch yüklenemedi */ }
+  }
+  
+  console.log(`Admin: ${allDiseases.length} hastalık, ${loaded} branş yüklendi`);
+  filteredDiseases = [...allDiseases];
+  
+  renderDashboard();
+  renderBranchFilter();
+  renderDiseasesTable();
+  renderBranchCards();
+  document.getElementById('navCountDiseases').textContent = allDiseases.length;
+}
+
+function renderDashboard() {
+  document.getElementById('statTotal').textContent = allDiseases.length.toLocaleString();
+  
+  const branches = new Set(allDiseases.map(d => d._branch));
+  document.getElementById('statBranches').textContent = branches.size;
+  
+  const withLab = allDiseases.filter(d => d.labFindings?.some(l => l.includes('['))).length;
+  document.getElementById('statLabPct').textContent = Math.round(withLab/allDiseases.length*100) + '%';
+  
+  const withDemo = allDiseases.filter(d => d.gender || d.ageRange).length;
+  document.getElementById('statDemoPct').textContent = Math.round(withDemo/allDiseases.length*100) + '%';
+  
+  // Branş özeti
+  const tbody = document.getElementById('branchSummaryBody');
+  const branchStats = {};
+  allDiseases.forEach(d => {
+    const b = d._branch;
+    if (!branchStats[b]) branchStats[b] = {total:0,male:0,female:0,child:0,lab:0};
+    branchStats[b].total++;
+    if (d.gender === 'male') branchStats[b].male++;
+    if (d.gender === 'female') branchStats[b].female++;
+    if (d.applicableTo?.child) branchStats[b].child++;
+    if (d.labFindings?.some(l=>l.includes('['))) branchStats[b].lab++;
+  });
+  
+  tbody.innerHTML = Object.entries(branchStats).map(([b,s]) => `
+    <tr>
+      <td class="td-name">${BRANCH_LABELS[b]||b}</td>
+      <td>${s.total}</td>
+      <td>${s.male}</td>
+      <td>${s.female}</td>
+      <td>${s.child}</td>
+      <td><span class="badge ${s.lab/s.total > .5 ? 'badge-high':'badge-medium'}">${Math.round(s.lab/s.total*100)}%</span></td>
+    </tr>`).join('');
+}
+
+function renderBranchFilter() {
+  const sel = document.getElementById('branchFilter');
+  BRANCHES.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b;
+    opt.textContent = BRANCH_LABELS[b] || b;
+    sel.appendChild(opt);
+  });
+}
+
+function filterDiseases() {
+  const q = document.getElementById('diseaseSearch')?.value.toLowerCase() || '';
+  const branch = document.getElementById('branchFilter')?.value || '';
+  const gender = document.getElementById('genderFilter')?.value || '';
+  
+  filteredDiseases = allDiseases.filter(d => {
+    if (q && !d.name.toLowerCase().includes(q) && !d.category?.toLowerCase().includes(q)) return false;
+    if (branch && d._branch !== branch) return false;
+    if (gender) {
+      const g = d.gender || 'both';
+      if (gender === 'male' && g !== 'male') return false;
+      if (gender === 'female' && g !== 'female') return false;
+      if (gender === 'both' && g !== 'both') return false;
+    }
+    return true;
+  });
+  currentPage = 1;
+  renderDiseasesTable();
+}
+
+function renderDiseasesTable() {
+  const start = (currentPage-1)*PAGE_SIZE;
+  const page = filteredDiseases.slice(start, start+PAGE_SIZE);
+  
+  const tbody = document.getElementById('diseaseTableBody');
+  tbody.innerHTML = page.map((d,i) => {
+    const labCount = (d.labFindings||[]).length;
+    const gBadge = d.gender === 'male' ? 'badge-male' : d.gender === 'female' ? 'badge-female' : 'badge-both';
+    const gLabel = d.gender === 'male' ? '♂ Erkek' : d.gender === 'female' ? '♀ Kadın' : '⚥ Her ikisi';
+    const pBadge = d.prevalence === 'high' ? 'badge-high' : d.prevalence === 'medium' ? 'badge-medium' : d.prevalence === 'rare' ? 'badge-rare' : 'badge-low';
+    const globalIdx = allDiseases.indexOf(d);
+    
+    return `<tr>
+      <td style="color:var(--text3);font-size:11px">${start+i+1}</td>
+      <td><div class="td-name">${d.name}</div><div class="td-cat">${d.id||''}</div></td>
+      <td style="font-size:12px">${BRANCH_LABELS[d._branch]||d._branch}</td>
+      <td><span class="badge ${gBadge}">${gLabel}</span></td>
+      <td><span class="badge ${pBadge}">${d.prevalence||'—'}</span></td>
+      <td style="font-size:12px">${labCount} bulgu</td>
+      <td><button class="btn-edit" onclick="openEditModal(${globalIdx})">✏️ Düzenle</button></td>
+    </tr>`;
+  }).join('');
+  
+  const totalPages = Math.ceil(filteredDiseases.length/PAGE_SIZE);
+  document.getElementById('pageInfo').textContent = 
+    `${start+1}–${Math.min(start+PAGE_SIZE,filteredDiseases.length)} / ${filteredDiseases.length} hastalık`;
+  
+  const btns = document.getElementById('pageBtns');
+  btns.innerHTML = '';
+  const pages = getPageNums(currentPage, totalPages);
+  pages.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn' + (p === currentPage ? ' active' : '');
+    btn.textContent = p === '…' ? '…' : p;
+    if (p !== '…') btn.onclick = () => { currentPage = p; renderDiseasesTable(); };
+    btns.appendChild(btn);
+  });
+}
+
+function getPageNums(cur, total) {
+  if (total <= 7) return Array.from({length:total},(_,i)=>i+1);
+  const pages = [1];
+  if (cur > 3) pages.push('…');
+  for (let i=Math.max(2,cur-1); i<=Math.min(total-1,cur+1); i++) pages.push(i);
+  if (cur < total-2) pages.push('…');
+  pages.push(total);
+  return pages;
+}
+
+function renderBranchCards() {
+  const cont = document.getElementById('branchCards');
+  const counts = {};
+  allDiseases.forEach(d => { counts[d._branch] = (counts[d._branch]||0)+1; });
+  cont.innerHTML = Object.entries(counts).map(([b,n]) => `
+    <div class="table-wrap" style="padding:16px;cursor:pointer" 
+         onclick="document.getElementById('branchFilter').value='${b}';showPage('diseases');filterDiseases()">
+      <div style="font-size:18px;margin-bottom:6px">🏥</div>
+      <div style="font-weight:600;font-size:13px">${BRANCH_LABELS[b]||b}</div>
+      <div style="font-size:24px;font-weight:700;color:var(--accent);margin:4px 0">${n}</div>
+      <div style="font-size:11px;color:var(--text3)">hastalık</div>
+    </div>`).join('');
+}
+
+// ==========================================
+// DÜZENLEME MODAL
+// ==========================================
+function openEditModal(idx) {
+  const d = allDiseases[idx];
+  if (!d) return;
+  document.getElementById('editDiseaseIdx').value = idx;
+  document.getElementById('editModalTitle').textContent = 'Düzenle: ' + d.name;
+  document.getElementById('editId').value = d.id || '';
+  document.getElementById('editName').value = d.name || '';
+  document.getElementById('editEnName').value = d.englishName || '';
+  document.getElementById('editCategory').value = d.category || '';
+  document.getElementById('editSubcat').value = d.subcategory || '';
+  document.getElementById('editPrevalence').value = d.prevalence || 'medium';
+  document.getElementById('editGender').value = d.gender || 'both';
+  document.getElementById('editAgeMin').value = d.ageRange?.min ?? 0;
+  document.getElementById('editAgeMax').value = d.ageRange?.max ?? 120;
+  document.getElementById('editSymptoms').value = (d.symptoms||[]).join(', ');
+  document.getElementById('editLabs').value = (d.labFindings||[]).join('\n');
+  document.getElementById('editTreatment').value = (d.treatment||[]).join(', ');
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('open');
+}
+
+function saveDiseaseEdit() {
+  const idx = parseInt(document.getElementById('editDiseaseIdx').value);
+  const d = allDiseases[idx];
+  if (!d) return;
+  
+  d.id = document.getElementById('editId').value;
+  d.name = document.getElementById('editName').value;
+  d.englishName = document.getElementById('editEnName').value;
+  d.category = document.getElementById('editCategory').value;
+  d.subcategory = document.getElementById('editSubcat').value;
+  d.prevalence = document.getElementById('editPrevalence').value;
+  d.gender = document.getElementById('editGender').value;
+  d.ageRange = {
+    min: parseFloat(document.getElementById('editAgeMin').value) || 0,
+    max: parseFloat(document.getElementById('editAgeMax').value) || 120
+  };
+  d.symptoms = document.getElementById('editSymptoms').value.split(',').map(s=>s.trim()).filter(Boolean);
+  d.labFindings = document.getElementById('editLabs').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  d.treatment = document.getElementById('editTreatment').value.split(',').map(s=>s.trim()).filter(Boolean);
+  d.applicableTo = {
+    male: d.gender !== 'female',
+    female: d.gender !== 'male',
+    pregnant: false, newborn: false, child: d.ageRange.max <= 18
+  };
+  
+  closeModal();
+  renderDiseasesTable();
+  showToast('Kaydedildi (bu oturumda geçerli)', 'success');
+}
+
+// ==========================================
+// PROFİL
+// ==========================================
+function loadProfileForm() {
+  const cfg = getAdminConfig();
+  if (!cfg) return;
+  document.getElementById('profileUser').value = cfg.username || '';
+  document.getElementById('profileName').value = cfg.name || '';
+  document.getElementById('profileTitle').value = cfg.title || '';
+}
+
+async function saveProfile() {
+  const cfg = getAdminConfig();
+  if (!cfg) return;
+  
+  const newUser = document.getElementById('profileUser').value.trim();
+  const newName = document.getElementById('profileName').value.trim();
+  const newTitle = document.getElementById('profileTitle').value.trim();
+  const curPw = document.getElementById('profileCurrentPw').value;
+  const newPw = document.getElementById('profileNewPw').value;
+  const newPw2 = document.getElementById('profileNewPw2').value;
+  
+  if (!newUser) { showToast('Kullanıcı adı boş olamaz', 'error'); return; }
+  
+  // Şifre değiştirme
+  if (newPw || curPw) {
+    if (!curPw) { showToast('Mevcut şifreyi girin', 'error'); return; }
+    const curHash = await sha256(cfg.username + ':' + curPw);
+    if (curHash !== cfg.userHash) { showToast('Mevcut şifre hatalı', 'error'); return; }
+    if (newPw.length < 6) { showToast('Yeni şifre en az 6 karakter', 'error'); return; }
+    if (newPw !== newPw2) { showToast('Şifreler eşleşmiyor', 'error'); return; }
+    cfg.userHash = await sha256(newUser + ':' + newPw);
+    sessionStorage.setItem(SESSION_KEY, cfg.userHash);
+    document.getElementById('profileCurrentPw').value = '';
+    document.getElementById('profileNewPw').value = '';
+    document.getElementById('profileNewPw2').value = '';
+  } else if (newUser !== cfg.username) {
+    // Sadece kullanıcı adı değişti, hash yeniden hesapla
+    // Şifresiz yeniden hesaplamak güvenli değil — şifre girmesini iste
+    showToast('Kullanıcı adı değiştirmek için mevcut şifreyi de girin', 'error');
+    return;
+  }
+  
+  cfg.username = newUser;
+  cfg.name = newName;
+  cfg.title = newTitle;
+  setAdminConfig(cfg);
+  
+  document.getElementById('adminUserName').textContent = newName || newUser;
+  showToast('Profil güncellendi', 'success');
+}
+
+// ==========================================
+// NAVİGASYON
+// ==========================================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  document.getElementById('nav-'+page)?.classList.add('active');
+}
+
+// ==========================================
+// TOAST
+// ==========================================
+function showToast(msg, type='info') {
+  const t = document.getElementById('adminToast');
+  t.textContent = msg;
+  t.className = `toast ${type}`;
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// BAŞLAT
+checkSession();
+</script>
+</body>
+</html>
